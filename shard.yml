@@ -1,0 +1,9 @@
+name: parsegres
+version: 0.1.0
+
+authors:
+  - Jamie Gaskins <jgaskins@hey.com>
+
+crystal: '>= 1.19.1'
+
+license: MIT
