@@ -34,7 +34,7 @@ SQL
 
 | Statement | Notes |
 |---|---|
-| `SELECT` | Including CTEs, set operations, subqueries, JOINs, aggregates |
+| `SELECT` | Including CTEs (`MATERIALIZED`/`NOT MATERIALIZED`), set operations, subqueries, JOINs, aggregates, window functions (`OVER`/`PARTITION BY`/`FILTER`) |
 | `INSERT` | `VALUES`, `DEFAULT VALUES`, `INSERT … SELECT`, `RETURNING` |
 | `UPDATE` | `FROM`, `RETURNING` |
 | `DELETE` | `USING`, `RETURNING` |
@@ -51,6 +51,11 @@ SQL
 | `DROP SEQUENCE` | Multiple targets, `IF EXISTS`, `CASCADE`/`RESTRICT` |
 | `CREATE SCHEMA` | `IF NOT EXISTS`, `AUTHORIZATION` |
 | `DROP SCHEMA` | Multiple targets, `IF EXISTS`, `CASCADE`/`RESTRICT` |
+| `CREATE EXTENSION` | `IF NOT EXISTS` |
+| `DROP EXTENSION` | Multiple targets, `IF EXISTS`, `CASCADE`/`RESTRICT` |
+| `CREATE TYPE` | Range types (`AS RANGE`) |
+| `CREATE RULE` | `OR REPLACE`, event routing, `DO ALSO`/`DO INSTEAD` |
+| `DO` | Anonymous code blocks, optional `LANGUAGE` |
 | `BEGIN` | Optional `WORK`/`TRANSACTION` |
 | `COMMIT` | Optional `WORK`/`TRANSACTION` |
 | `ROLLBACK` | Optional `WORK`/`TRANSACTION` |
@@ -59,8 +64,8 @@ SQL
 
 The following statement types are not currently supported. PRs welcome!
 
-- **`CREATE TYPE` / `DROP TYPE`** — composite types, enums, domains, range types
-- **`CREATE EXTENSION` / `DROP EXTENSION`** — extension management
+- **`CREATE TYPE`** — composite types, enums, domains (range types are supported)
+- **`DROP TYPE`** — dropping types
 - **`GRANT` / `REVOKE`** — privilege management
 - **`CREATE FUNCTION` / `DROP FUNCTION`** — user-defined functions
 - **`CREATE TRIGGER` / `DROP TRIGGER`** — trigger management
