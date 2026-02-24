@@ -259,29 +259,29 @@ module Parsegres
 
       loop do
         join_kind = case current.type
-                    when TokenType::Join
+                    when .join?
                       advance
                       AST::JoinExpr::Kind::Inner
-                    when TokenType::Inner
+                    when .inner?
                       advance
                       consume :join
                       AST::JoinExpr::Kind::Inner
-                    when TokenType::Left
+                    when .left?
                       advance
                       token(:outer)
                       consume :join
                       AST::JoinExpr::Kind::Left
-                    when TokenType::Right
+                    when .right?
                       advance
                       token(:outer)
                       consume :join
                       AST::JoinExpr::Kind::Right
-                    when TokenType::Full
+                    when .full?
                       advance
                       token(:outer)
                       consume :join
                       AST::JoinExpr::Kind::Full
-                    when TokenType::Cross
+                    when .cross?
                       advance
                       consume :join
                       AST::JoinExpr::Kind::Cross
@@ -445,43 +445,43 @@ module Parsegres
       left = parse_in_between_like
 
       case current.type
-      when TokenType::Eq
+      when .eq?
         advance
         AST::BinaryExpr.new("=", left, parse_in_between_like)
-      when TokenType::NotEq
+      when .not_eq?
         advance
         AST::BinaryExpr.new("<>", left, parse_in_between_like)
-      when TokenType::Lt
+      when .lt?
         advance
         AST::BinaryExpr.new("<", left, parse_in_between_like)
-      when TokenType::Gt
+      when .gt?
         advance
         AST::BinaryExpr.new(">", left, parse_in_between_like)
-      when TokenType::LtEq
+      when .lt_eq?
         advance
         AST::BinaryExpr.new("<=", left, parse_in_between_like)
-      when TokenType::GtEq
+      when .gt_eq?
         advance
         AST::BinaryExpr.new(">=", left, parse_in_between_like)
-      when TokenType::Contains
+      when .contains?
         advance
         AST::BinaryExpr.new("@>", left, parse_in_between_like)
-      when TokenType::ContainedBy
+      when .contained_by?
         advance
         AST::BinaryExpr.new("<@", left, parse_in_between_like)
-      when TokenType::TextSearch
+      when .text_search?
         advance
         AST::BinaryExpr.new("@@", left, parse_in_between_like)
-      when TokenType::Tilde
+      when .tilde?
         advance
         AST::BinaryExpr.new("~", left, parse_in_between_like)
-      when TokenType::TildeStar
+      when .tilde_star?
         advance
         AST::BinaryExpr.new("~*", left, parse_in_between_like)
-      when TokenType::NotTilde
+      when .not_tilde?
         advance
         AST::BinaryExpr.new("!~", left, parse_in_between_like)
-      when TokenType::NotTildeStar
+      when .not_tilde_star?
         advance
         AST::BinaryExpr.new("!~*", left, parse_in_between_like)
       else
