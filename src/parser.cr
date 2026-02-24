@@ -1,3 +1,8 @@
+require "./ast"
+require "./error"
+require "./lexer"
+require "./token"
+
 module Parsegres
   class Parser
     # Multi-word PostgreSQL type names that can appear after ::
