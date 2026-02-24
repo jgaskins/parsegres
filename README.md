@@ -1,6 +1,6 @@
 # `Parsegres`
 
-Parsegres provides a Postgre-compatible SQL parser.
+Parsegres provides a Postgres-compatible SQL parser.
 
 ## Installation
 
