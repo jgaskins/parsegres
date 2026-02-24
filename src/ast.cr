@@ -8,7 +8,7 @@ module Parsegres
 
     abstract class FromItem < Node; end
 
-    # ── Statements ────────────────────────────────────────────────────────────
+    # Statements
 
     class SelectStatement < Statement
       property ctes : Array(CTEDefinition) = [] of CTEDefinition
@@ -71,7 +71,7 @@ module Parsegres
       end
     end
 
-    # ── CREATE TABLE ──────────────────────────────────────────────────────────
+    # CREATE TABLE
 
     class CreateTableStatement < Statement
       property schema : String? = nil
@@ -178,7 +178,7 @@ module Parsegres
       end
     end
 
-    # ── ALTER TABLE ───────────────────────────────────────────────────────────
+    # ALTER TABLE
 
     enum DropBehavior
       Restrict
@@ -283,7 +283,7 @@ module Parsegres
       end
     end
 
-    # ── DROP TABLE ────────────────────────────────────────────────────────────
+    # DROP TABLE
 
     record DropTableTarget, schema : String?, name : String
 
@@ -296,7 +296,7 @@ module Parsegres
       end
     end
 
-    # ── CREATE INDEX / DROP INDEX ─────────────────────────────────────────────
+    # CREATE INDEX / DROP INDEX
 
     class IndexElement < Node
       property column : String
@@ -336,7 +336,7 @@ module Parsegres
       end
     end
 
-    # ── CREATE VIEW / DROP VIEW ───────────────────────────────────────────────
+    # CREATE VIEW / DROP VIEW
 
     class CreateViewStatement < Statement
       property? or_replace : Bool = false
@@ -362,7 +362,7 @@ module Parsegres
       end
     end
 
-    # ── TRUNCATE ──────────────────────────────────────────────────────────────
+    # TRUNCATE
 
     record TruncateTarget, schema : String?, name : String, only : Bool
 
@@ -380,7 +380,7 @@ module Parsegres
       end
     end
 
-    # ── CREATE / ALTER / DROP SEQUENCE ────────────────────────────────────────
+    # CREATE / ALTER / DROP SEQUENCE
 
     class SequenceOptions < Node
       property increment : Int64? = nil
@@ -430,7 +430,7 @@ module Parsegres
       end
     end
 
-    # ── CREATE / DROP EXTENSION ───────────────────────────────────────────────
+    # CREATE / DROP EXTENSION
 
     class CreateExtensionStatement < Statement
       property name : String
@@ -449,7 +449,7 @@ module Parsegres
       end
     end
 
-    # ── CREATE / DROP TYPE ────────────────────────────────────────────────────
+    # CREATE / DROP TYPE
 
     class CreateRangeTypeStatement < Statement
       property schema : String? = nil
@@ -471,7 +471,7 @@ module Parsegres
       end
     end
 
-    # ── CREATE / DROP SCHEMA ──────────────────────────────────────────────────
+    # CREATE / DROP SCHEMA
 
     class CreateSchemaStatement < Statement
       property? if_not_exists : Bool = false
@@ -491,7 +491,7 @@ module Parsegres
       end
     end
 
-    # ── Transaction control ───────────────────────────────────────────────────
+    # Transaction control
 
     class BeginStatement < Statement; end
 
@@ -535,7 +535,7 @@ module Parsegres
 
     class DefaultValuesSource < InsertSource; end
 
-    # ── CTEs ──────────────────────────────────────────────────────────────────
+    # CTEs
 
     class CTEDefinition < Node
       property name : String
@@ -547,7 +547,7 @@ module Parsegres
       end
     end
 
-    # ── Set operations ────────────────────────────────────────────────────────
+    # Set operations
     #
     # Precedence: INTERSECT binds tighter than UNION / EXCEPT.
     # The tree structure encodes this: each CompoundSelect node holds two
@@ -577,7 +577,7 @@ module Parsegres
       end
     end
 
-    # ── Column list ───────────────────────────────────────────────────────────
+    # Column list
 
     class SelectColumn < Node
       property expr : Expr
@@ -587,7 +587,7 @@ module Parsegres
       end
     end
 
-    # ── FROM items ────────────────────────────────────────────────────────────
+    # FROM items
 
     class TableRef < FromItem
       property schema : String? = nil
@@ -633,7 +633,7 @@ module Parsegres
       end
     end
 
-    # ── Literals ──────────────────────────────────────────────────────────────
+    # Literals
 
     class IntegerLiteral < Expr
       property value : Int64
@@ -674,7 +674,7 @@ module Parsegres
       end
     end
 
-    # ── Column and wildcard references ────────────────────────────────────────
+    # Column and wildcard references
 
     class ColumnRef < Expr
       property table : String? = nil
@@ -686,7 +686,7 @@ module Parsegres
 
     class Wildcard < Expr; end
 
-    # ── Compound expressions ──────────────────────────────────────────────────
+    # Compound expressions
 
     class BinaryExpr < Expr
       property op : String
@@ -810,7 +810,7 @@ module Parsegres
       end
     end
 
-    # ── ORDER BY ─────────────────────────────────────────────────────────────
+    # ORDER BY
 
     class OrderByItem < Node
       enum Direction
