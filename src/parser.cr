@@ -1369,7 +1369,7 @@ module Parsegres
                  when .gt?      then ">"
                  when .lt_eq?   then "<="
                  when .gt_eq?   then ">="
-                 else raise ParseError.new("Expected operator in EXCLUDE element", current)
+                 else                raise ParseError.new("Expected operator in EXCLUDE element", current)
                  end
       advance
       AST::ExcludeElement.new(column, operator)

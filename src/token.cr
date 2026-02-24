@@ -35,17 +35,17 @@ module Parsegres
     Over; Partition
 
     # Operators
-    Eq      # =
-    NotEq   # <> or !=
-    Lt      # <
-    Gt      # >
-    LtEq    # <=
-    GtEq    # >=
-    Plus    # +
-    Minus   # -
-    Star    # *
-    Slash   # /
-    Percent # %
+    Eq           # =
+    NotEq        # <> or !=
+    Lt           # <
+    Gt           # >
+    LtEq         # <=
+    GtEq         # >=
+    Plus         # +
+    Minus        # -
+    Star         # *
+    Slash        # /
+    Percent      # %
     Concat       # ||
     Overlap      # &&
     JsonPath     # #>
