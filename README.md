@@ -34,25 +34,25 @@ SQL
 
 | Statement | Notes |
 |---|---|
-| `SELECT` | Including CTEs (`MATERIALIZED`/`NOT MATERIALIZED`), set operations, subqueries, JOINs, aggregates, window functions (`OVER`/`PARTITION BY`/`FILTER`) |
+| `SELECT` | CTEs, set operations (`UNION`, et al), subqueries, JOINs, window functions |
 | `INSERT` | `VALUES`, `DEFAULT VALUES`, `INSERT … SELECT`, `RETURNING` |
 | `UPDATE` | `FROM`, `RETURNING` |
 | `DELETE` | `USING`, `RETURNING` |
 | `CREATE TABLE` | Column/table constraints, `TEMP`, `IF NOT EXISTS`, schema-qualified |
-| `ALTER TABLE` | Add/drop/alter columns, rename, add/drop constraints |
-| `DROP TABLE` | Multiple targets, `IF EXISTS`, `CASCADE`/`RESTRICT` |
+| `ALTER TABLE` | `{ADD,DROP,ALTER,RENAME} COLUMN`, `ADD`/`DROP CONSTRAINT` |
+| `DROP TABLE` | `IF EXISTS`, `CASCADE`/`RESTRICT`, multiple tables |
 | `CREATE INDEX` | `UNIQUE`, `CONCURRENTLY`, `USING`, partial indexes, `IF NOT EXISTS` |
-| `DROP INDEX` | Multiple targets, `CONCURRENTLY`, `IF EXISTS` |
+| `DROP INDEX` | `CONCURRENTLY`, `IF EXISTS`, multiple indexes |
 | `CREATE VIEW` | `OR REPLACE`, `TEMP`, `IF NOT EXISTS`, explicit column list |
-| `DROP VIEW` | Multiple targets, `IF EXISTS`, `CASCADE`/`RESTRICT` |
+| `DROP VIEW` | `IF EXISTS`, `CASCADE`/`RESTRICT`, multiple views |
 | `TRUNCATE` | Multiple targets, `ONLY`, `RESTART`/`CONTINUE IDENTITY`, `CASCADE`/`RESTRICT` |
 | `CREATE SEQUENCE` | All standard options (`INCREMENT BY`, `MINVALUE`/`MAXVALUE`, `START`, `CACHE`, `CYCLE`, `OWNED BY`) |
 | `ALTER SEQUENCE` | Same options as `CREATE SEQUENCE`, plus `RESTART` |
-| `DROP SEQUENCE` | Multiple targets, `IF EXISTS`, `CASCADE`/`RESTRICT` |
+| `DROP SEQUENCE` | `IF EXISTS`, `CASCADE`/`RESTRICT`, multiple sequences |
 | `CREATE SCHEMA` | `IF NOT EXISTS`, `AUTHORIZATION` |
-| `DROP SCHEMA` | Multiple targets, `IF EXISTS`, `CASCADE`/`RESTRICT` |
+| `DROP SCHEMA` | `IF EXISTS`, `CASCADE`/`RESTRICT`, multiple schemas |
 | `CREATE EXTENSION` | `IF NOT EXISTS` |
-| `DROP EXTENSION` | Multiple targets, `IF EXISTS`, `CASCADE`/`RESTRICT` |
+| `DROP EXTENSION` | `IF EXISTS`, `CASCADE`/`RESTRICT`, multiple extensions |
 | `CREATE TYPE` | Range types (`AS RANGE`) |
 | `CREATE RULE` | `OR REPLACE`, event routing, `DO ALSO`/`DO INSTEAD` |
 | `DO` | Anonymous code blocks, optional `LANGUAGE` |
