@@ -1,7 +1,3 @@
-require "./token"
-require "./error"
-require "./ast"
-require "./lexer"
 require "./parser"
 
 module Parsegres

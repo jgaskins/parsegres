@@ -1,3 +1,6 @@
+require "./error"
+require "./token"
+
 module Parsegres
   class Lexer
     KEYWORDS = {
