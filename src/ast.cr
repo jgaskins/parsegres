@@ -1,12 +1,85 @@
 module Parsegres
+  # :nodoc:
+  module Inspectable
+    def pretty_print(pp : PrettyPrint) : Nil
+      prefix = "#{pretty_print_label}("
+      executed = exec_recursive(:pretty_print) do
+        has_written = false
+        wrote_last_iteration = true
+        pp.surround(prefix, ")", left_break: nil, right_break: nil) do
+          {% for ivar, i in @type.instance_vars.map(&.name).sort %}
+            if wrote_last_iteration
+              if has_written && {{i < @type.instance_vars.size - 1}}
+                pp.comma
+              else
+                pp.breakable
+              end
+            end
+
+            case value = @{{ivar.id}}
+            when Array
+              write = !value.empty?
+            when Nil
+              write = false
+            else
+              write = true
+            end
+
+            if write
+              wrote_last_iteration = false
+              pp.group do
+                pp.text "@{{ivar.id}}="
+                pp.nest do
+                  pp.breakable ""
+                  @{{ivar.id}}.pretty_print(pp)
+                end
+              end
+              has_written = true
+              wrote_last_iteration = true
+            else
+              wrote_last_iteration = false
+            end
+          {% end %}
+        end
+      end
+      unless executed
+        pp.text "#{prefix} ...>"
+      end
+    end
+  end
+
   module AST
-    abstract class Node; end
+    abstract class Node
+      include Inspectable
 
-    abstract class Statement < Node; end
+      def pretty_print_label
+        self.class.name.gsub /.*::/, ""
+      end
+    end
 
-    abstract class Expr < Node; end
+    abstract class Statement < Node
+      include Inspectable
 
-    abstract class FromItem < Node; end
+      def pretty_print_label
+        self.class.name
+      end
+    end
+
+    abstract class Expr < Node
+      include Inspectable
+
+      def pretty_print_label
+        self.class.name.gsub /.*::/, ""
+      end
+    end
+
+    abstract class FromItem < Node
+      include Inspectable
+
+      def pretty_print_label
+        self.class.name.gsub /.*::/, ""
+      end
+    end
 
     # Statements
 
