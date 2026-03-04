@@ -1,102 +1,102 @@
 module Parsegres
   class Lexer
     KEYWORDS = {
-      "SELECT"       => TokenType::Select,
-      "FROM"         => TokenType::From,
-      "WHERE"        => TokenType::Where,
-      "AND"          => TokenType::And,
-      "OR"           => TokenType::Or,
-      "NOT"          => TokenType::Not,
-      "JOIN"         => TokenType::Join,
-      "INNER"        => TokenType::Inner,
-      "LEFT"         => TokenType::Left,
-      "RIGHT"        => TokenType::Right,
-      "FULL"         => TokenType::Full,
-      "OUTER"        => TokenType::Outer,
-      "CROSS"        => TokenType::Cross,
-      "NATURAL"      => TokenType::Natural,
-      "ON"           => TokenType::On,
-      "USING"        => TokenType::Using,
-      "AS"           => TokenType::As,
-      "GROUP"        => TokenType::Group,
-      "BY"           => TokenType::By,
-      "HAVING"       => TokenType::Having,
-      "ORDER"        => TokenType::Order,
-      "ASC"          => TokenType::Asc,
-      "DESC"         => TokenType::Desc,
-      "NULLS"        => TokenType::Nulls,
-      "FIRST"        => TokenType::First,
-      "LAST"         => TokenType::Last,
-      "LIMIT"        => TokenType::Limit,
-      "OFFSET"       => TokenType::Offset,
-      "IN"           => TokenType::In,
-      "BETWEEN"      => TokenType::Between,
-      "LIKE"         => TokenType::Like,
-      "ILIKE"        => TokenType::ILike,
-      "IS"           => TokenType::Is,
-      "NULL"         => TokenType::Null,
-      "CASE"         => TokenType::Case,
-      "WHEN"         => TokenType::When,
-      "THEN"         => TokenType::Then,
-      "ELSE"         => TokenType::Else,
-      "END"          => TokenType::End,
-      "TRUE"         => TokenType::True,
-      "FALSE"        => TokenType::False,
-      "DISTINCT"     => TokenType::Distinct,
-      "ALL"          => TokenType::All,
-      "EXISTS"       => TokenType::Exists,
-      "UNION"        => TokenType::Union,
-      "EXCEPT"       => TokenType::Except,
-      "INTERSECT"    => TokenType::Intersect,
-      "WITH"         => TokenType::With,
-      "RECURSIVE"    => TokenType::Recursive,
-      "INSERT"       => TokenType::Insert,
-      "INTO"         => TokenType::Into,
-      "VALUES"       => TokenType::Values,
-      "DEFAULT"      => TokenType::Default,
-      "RETURNING"    => TokenType::Returning,
-      "UPDATE"       => TokenType::Update,
-      "SET"          => TokenType::Set,
-      "ONLY"         => TokenType::Only,
-      "DELETE"       => TokenType::Delete,
-      "CREATE"       => TokenType::Create,
-      "TABLE"        => TokenType::Table,
-      "TEMP"         => TokenType::Temp,
-      "TEMPORARY"    => TokenType::Temporary,
-      "IF"           => TokenType::If,
-      "PRIMARY"      => TokenType::Primary,
-      "KEY"          => TokenType::Key,
-      "REFERENCES"   => TokenType::References,
-      "FOREIGN"      => TokenType::Foreign,
-      "CHECK"        => TokenType::Check,
-      "UNIQUE"       => TokenType::Unique,
-      "CONSTRAINT"   => TokenType::Constraint,
-      "ALTER"        => TokenType::Alter,
-      "ADD"          => TokenType::Add,
-      "DROP"         => TokenType::Drop,
-      "COLUMN"       => TokenType::Column,
-      "RENAME"       => TokenType::Rename,
-      "TO"           => TokenType::To,
-      "CASCADE"      => TokenType::Cascade,
-      "RESTRICT"     => TokenType::Restrict,
-      "INDEX"        => TokenType::Index,
-      "CONCURRENTLY" => TokenType::Concurrently,
-      "VIEW"         => TokenType::View,
-      "TRUNCATE"     => TokenType::Truncate,
-      "SEQUENCE"     => TokenType::Sequence,
-      "SCHEMA"       => TokenType::Schema,
-      "BEGIN"        => TokenType::Begin,
-      "COMMIT"       => TokenType::Commit,
-      "ROLLBACK"     => TokenType::Rollback,
-      "SAVEPOINT"    => TokenType::Savepoint,
-      "RELEASE"      => TokenType::Release,
-      "EXTENSION"    => TokenType::Extension,
-      "EXCLUDE"      => TokenType::Exclude,
-      "TYPE"         => TokenType::Type,
-      "DO"           => TokenType::Do,
-      "OVER"         => TokenType::Over,
-      "PARTITION"    => TokenType::Partition,
-    }
+      "SELECT"       => :select,
+      "FROM"         => :from,
+      "WHERE"        => :where,
+      "AND"          => :and,
+      "OR"           => :or,
+      "NOT"          => :not,
+      "JOIN"         => :join,
+      "INNER"        => :inner,
+      "LEFT"         => :left,
+      "RIGHT"        => :right,
+      "FULL"         => :full,
+      "OUTER"        => :outer,
+      "CROSS"        => :cross,
+      "NATURAL"      => :natural,
+      "ON"           => :on,
+      "USING"        => :using,
+      "AS"           => :as,
+      "GROUP"        => :group,
+      "BY"           => :by,
+      "HAVING"       => :having,
+      "ORDER"        => :order,
+      "ASC"          => :asc,
+      "DESC"         => :desc,
+      "NULLS"        => :nulls,
+      "FIRST"        => :first,
+      "LAST"         => :last,
+      "LIMIT"        => :limit,
+      "OFFSET"       => :offset,
+      "IN"           => :in,
+      "BETWEEN"      => :between,
+      "LIKE"         => :like,
+      "ILIKE"        => :i_like,
+      "IS"           => :is,
+      "NULL"         => :null,
+      "CASE"         => :case,
+      "WHEN"         => :when,
+      "THEN"         => :then,
+      "ELSE"         => :else,
+      "END"          => :end,
+      "TRUE"         => :true,
+      "FALSE"        => :false,
+      "DISTINCT"     => :distinct,
+      "ALL"          => :all,
+      "EXISTS"       => :exists,
+      "UNION"        => :union,
+      "EXCEPT"       => :except,
+      "INTERSECT"    => :intersect,
+      "WITH"         => :with,
+      "RECURSIVE"    => :recursive,
+      "INSERT"       => :insert,
+      "INTO"         => :into,
+      "VALUES"       => :values,
+      "DEFAULT"      => :default,
+      "RETURNING"    => :returning,
+      "UPDATE"       => :update,
+      "SET"          => :set,
+      "ONLY"         => :only,
+      "DELETE"       => :delete,
+      "CREATE"       => :create,
+      "TABLE"        => :table,
+      "TEMP"         => :temp,
+      "TEMPORARY"    => :temporary,
+      "IF"           => :if,
+      "PRIMARY"      => :primary,
+      "KEY"          => :key,
+      "REFERENCES"   => :references,
+      "FOREIGN"      => :foreign,
+      "CHECK"        => :check,
+      "UNIQUE"       => :unique,
+      "CONSTRAINT"   => :constraint,
+      "ALTER"        => :alter,
+      "ADD"          => :add,
+      "DROP"         => :drop,
+      "COLUMN"       => :column,
+      "RENAME"       => :rename,
+      "TO"           => :to,
+      "CASCADE"      => :cascade,
+      "RESTRICT"     => :restrict,
+      "INDEX"        => :index,
+      "CONCURRENTLY" => :concurrently,
+      "VIEW"         => :view,
+      "TRUNCATE"     => :truncate,
+      "SEQUENCE"     => :sequence,
+      "SCHEMA"       => :schema,
+      "BEGIN"        => :begin,
+      "COMMIT"       => :commit,
+      "ROLLBACK"     => :rollback,
+      "SAVEPOINT"    => :savepoint,
+      "RELEASE"      => :release,
+      "EXTENSION"    => :extension,
+      "EXCLUDE"      => :exclude,
+      "TYPE"         => :type,
+      "DO"           => :do,
+      "OVER"         => :over,
+      "PARTITION"    => :partition,
+    } of String => TokenType
 
     def initialize(@source : String)
       @chars = @source.chars
@@ -125,81 +125,81 @@ module Parsegres
                 scan_word(start)
               when '='
                 advance
-                Token.new(TokenType::Eq, "=", start)
+                Token.new(:eq, "=", start)
               when '<'
                 advance
                 if !at_end? && current_char == '='
                   advance
-                  Token.new(TokenType::LtEq, "<=", start)
+                  Token.new(:lt_eq, "<=", start)
                 elsif !at_end? && current_char == '>'
                   advance
-                  Token.new(TokenType::NotEq, "<>", start)
+                  Token.new(:not_eq, "<>", start)
                 elsif !at_end? && current_char == '@'
                   advance
-                  Token.new(TokenType::ContainedBy, "<@", start)
+                  Token.new(:contained_by, "<@", start)
                 elsif !at_end? && current_char == '<'
                   advance
-                  Token.new(TokenType::ShiftLeft, "<<", start)
+                  Token.new(:shift_left, "<<", start)
                 else
-                  Token.new(TokenType::Lt, "<", start)
+                  Token.new(:lt, "<", start)
                 end
               when '>'
                 advance
                 if !at_end? && current_char == '='
                   advance
-                  Token.new(TokenType::GtEq, ">=", start)
+                  Token.new(:gt_eq, ">=", start)
                 elsif !at_end? && current_char == '>'
                   advance
-                  Token.new(TokenType::ShiftRight, ">>", start)
+                  Token.new(:shift_right, ">>", start)
                 else
-                  Token.new(TokenType::Gt, ">", start)
+                  Token.new(:gt, ">", start)
                 end
               when '!'
                 advance
                 if !at_end? && current_char == '='
                   advance
-                  Token.new(TokenType::NotEq, "!=", start)
+                  Token.new(:not_eq, "!=", start)
                 elsif !at_end? && current_char == '~'
                   advance
                   if !at_end? && current_char == '*'
                     advance
-                    Token.new(TokenType::NotTildeStar, "!~*", start)
+                    Token.new(:not_tilde_star, "!~*", start)
                   else
-                    Token.new(TokenType::NotTilde, "!~", start)
+                    Token.new(:not_tilde, "!~", start)
                   end
                 else
                   raise LexError.new("Unexpected '!' (did you mean '!=', '!~', or '!~*'?)", start)
                 end
               when '+'
-                advance; Token.new(TokenType::Plus, "+", start)
+                advance; Token.new(:plus, "+", start)
               when '-'
                 advance
                 if !at_end? && current_char == '>'
                   advance
                   if !at_end? && current_char == '>'
                     advance
-                    Token.new(TokenType::ArrowText, "->>", start)
+                    Token.new(:arrow_text, "->>", start)
                   else
-                    Token.new(TokenType::Arrow, "->", start)
+                    Token.new(:arrow, "->", start)
                   end
                 else
-                  Token.new(TokenType::Minus, "-", start)
+                  Token.new(:minus, "-", start)
                 end
               when '*'
-                advance; Token.new(TokenType::Star, "*", start)
+                advance; Token.new(:star, "*", start)
               when '/'
-                advance; Token.new(TokenType::Slash, "/", start)
+                advance; Token.new(:slash, "/", start)
               when '%'
-                advance; Token.new(TokenType::Percent, "%", start)
+                advance; Token.new(:percent, "%", start)
               when '#'
                 advance
                 if !at_end? && current_char == '>'
                   advance
                   if !at_end? && current_char == '>'
                     advance
-                    Token.new(TokenType::JsonPathText, "#>>", start)
+                    Token.new(:json_path_text, "#>>", start)
                   else
-                    Token.new(TokenType::JsonPath, "#>", start)
+                    Token.new(:json_path, "#>", start)
                   end
                 else
                   raise LexError.new("Unexpected '#' (did you mean '#>' or '#>>'?)", start)
@@ -208,38 +208,38 @@ module Parsegres
                 advance
                 if !at_end? && current_char == '&'
                   advance
-                  Token.new(TokenType::Overlap, "&&", start)
+                  Token.new(:overlap, "&&", start)
                 else
-                  Token.new(TokenType::BitAnd, "&", start)
+                  Token.new(:bit_and, "&", start)
                 end
               when '|'
                 advance
                 if !at_end? && current_char == '|'
                   advance
-                  Token.new(TokenType::Concat, "||", start)
+                  Token.new(:concat, "||", start)
                 else
-                  Token.new(TokenType::BitOr, "|", start)
+                  Token.new(:bit_or, "|", start)
                 end
               when ':'
                 advance
                 if !at_end? && current_char == ':'
                   advance
-                  Token.new(TokenType::Cast, "::", start)
+                  Token.new(:cast, "::", start)
                 else
                   raise LexError.new("Unexpected ':' (did you mean '::'?)", start)
                 end
               when '('
-                advance; Token.new(TokenType::LParen, "(", start)
+                advance; Token.new(:l_paren, "(", start)
               when ')'
-                advance; Token.new(TokenType::RParen, ")", start)
+                advance; Token.new(:r_paren, ")", start)
               when '['
-                advance; Token.new(TokenType::LBracket, "[", start)
+                advance; Token.new(:l_bracket, "[", start)
               when ']'
-                advance; Token.new(TokenType::RBracket, "]", start)
+                advance; Token.new(:r_bracket, "]", start)
               when ','
-                advance; Token.new(TokenType::Comma, ",", start)
+                advance; Token.new(:comma, ",", start)
               when ';'
-                advance; Token.new(TokenType::Semicolon, ";", start)
+                advance; Token.new(:semicolon, ";", start)
               when '.'
                 advance
                 if !at_end? && current_char.ascii_number?
@@ -253,18 +253,18 @@ module Parsegres
                       advance
                     end
                   end
-                  Token.new(TokenType::Float, @chars[start...@pos].join, start)
+                  Token.new(:float, @chars[start...@pos].join, start)
                 else
-                  Token.new(TokenType::Dot, ".", start)
+                  Token.new(:dot, ".", start)
                 end
               when '@'
                 advance
                 if !at_end? && current_char == '>'
                   advance
-                  Token.new(TokenType::Contains, "@>", start)
+                  Token.new(:contains, "@>", start)
                 elsif !at_end? && current_char == '@'
                   advance
-                  Token.new(TokenType::TextSearch, "@@", start)
+                  Token.new(:text_search, "@@", start)
                 else
                   raise LexError.new("Unexpected '@' (did you mean '@>' or '@@'?)", start)
                 end
@@ -272,12 +272,12 @@ module Parsegres
                 advance
                 if !at_end? && current_char == '*'
                   advance
-                  Token.new(TokenType::TildeStar, "~*", start)
+                  Token.new(:tilde_star, "~*", start)
                 else
-                  Token.new(TokenType::Tilde, "~", start)
+                  Token.new(:tilde, "~", start)
                 end
               when '^'
-                advance; Token.new(TokenType::Power, "^", start)
+                advance; Token.new(:power, "^", start)
               else
                 raise LexError.new("Unexpected character #{ch.inspect}", start)
               end
@@ -285,7 +285,7 @@ module Parsegres
         tokens << tok
       end
 
-      tokens << Token.new(TokenType::EOF, "", @pos)
+      tokens << Token.new(:eof, "", @pos)
       tokens
     end
 
@@ -320,7 +320,7 @@ module Parsegres
           advance
         end
       end
-      Token.new(TokenType::String, io.to_s, start)
+      Token.new(:string, io.to_s, start)
     end
 
     private def scan_quoted_identifier(start : Int32) : Token
@@ -342,7 +342,7 @@ module Parsegres
           advance
         end
       end
-      Token.new(TokenType::Identifier, io.to_s, start)
+      Token.new(:identifier, io.to_s, start)
     end
 
     private def scan_dollar(start : Int32) : Token
@@ -352,7 +352,7 @@ module Parsegres
         while !at_end? && current_char.ascii_number?
           advance
         end
-        Token.new(TokenType::DollarParam, @chars[num_start...@pos].join, start)
+        Token.new(:dollar_param, @chars[num_start...@pos].join, start)
       else
         # Dollar-quoted string: $tag$...$tag$  (tag may be empty: $$...$$)
         tag_start = @pos
@@ -386,7 +386,7 @@ module Parsegres
             advance
           end
         end
-        Token.new(TokenType::String, io.to_s, start)
+        Token.new(:string, io.to_s, start)
       end
     end
 
@@ -406,9 +406,9 @@ module Parsegres
             advance
           end
         end
-        Token.new(TokenType::Float, @chars[start...@pos].join, start)
+        Token.new(:float, @chars[start...@pos].join, start)
       else
-        Token.new(TokenType::Integer, @chars[start...@pos].join, start)
+        Token.new(:integer, @chars[start...@pos].join, start)
       end
     end
 
