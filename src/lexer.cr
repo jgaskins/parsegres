@@ -99,7 +99,6 @@ module Parsegres
     } of String => TokenType
 
     def initialize(@source : String)
-      @chars = @source.chars
       @pos = 0
     end
 
@@ -263,7 +262,7 @@ module Parsegres
                       advance
                     end
                   end
-                  Token.new(:float, @chars[start...@pos].join, start)
+                  Token.new(:float, @source[start...@pos], start)
                 else
                   Token.new(:dot, ".", start)
                 end
@@ -365,7 +364,7 @@ module Parsegres
         while !at_end? && current_char.ascii_number?
           advance
         end
-        Token.new(:dollar_param, @chars[num_start...@pos].join, start)
+        Token.new(:dollar_param, @source[num_start...@pos], start)
       else
         # Dollar-quoted string: $tag$...$tag$  (tag may be empty: $$...$$)
         tag_start = @pos
@@ -373,7 +372,7 @@ module Parsegres
           advance
         end
         raise LexError.new("Unexpected '$' (expected digit for $N parameter or '$' for dollar-quote)", start) unless !at_end? && current_char == '$'
-        tag = @chars[tag_start...@pos].join
+        tag = @source[tag_start...@pos]
         advance # consume the closing $ of the opening delimiter
 
         string = String.build do |str|
@@ -420,9 +419,9 @@ module Parsegres
             advance
           end
         end
-        Token.new(:float, @chars[start...@pos].join, start)
+        Token.new(:float, @source[start...@pos], start)
       else
-        Token.new(:integer, @chars[start...@pos].join, start)
+        Token.new(:integer, @source[start...@pos], start)
       end
     end
 
@@ -430,7 +429,7 @@ module Parsegres
       while !at_end? && (current_char.ascii_alphanumeric? || current_char == '_')
         advance
       end
-      text = @chars[start...@pos].join
+      text = @source[start...@pos]
       kind = KEYWORDS[text.upcase]? || TokenType::Identifier
       Token.new(kind, text, start)
     end
@@ -452,8 +451,8 @@ module Parsegres
         if current_char == '/' && peek_char == '*'
           @pos += 2
           loop do
-            raise LexError.new("Unterminated block comment", @pos) if @pos + 1 >= @chars.size
-            if @chars[@pos] == '*' && @chars[@pos + 1] == '/'
+            raise LexError.new("Unterminated block comment", @pos) if @pos + 1 >= @source.size
+            if @source[@pos] == '*' && @source[@pos + 1] == '/'
               @pos += 2
               break
             end
@@ -473,11 +472,11 @@ module Parsegres
     end
 
     private def current_char : Char
-      @chars[@pos]
+      @source[@pos]
     end
 
     private def peek_char : Char
-      @pos + 1 < @chars.size ? @chars[@pos + 1] : '\0'
+      @pos + 1 < @source.size ? @source[@pos + 1] : '\0'
     end
 
     private def advance
@@ -485,7 +484,7 @@ module Parsegres
     end
 
     private def at_end? : Bool
-      @pos >= @chars.size
+      @pos >= @source.size
     end
   end
 end
