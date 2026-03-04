@@ -171,7 +171,8 @@ module Parsegres
                   raise LexError.new("Unexpected '!' (did you mean '!=', '!~', or '!~*'?)", start)
                 end
               when '+'
-                advance; Token.new(:plus, "+", start)
+                advance
+                Token.new(:plus, "+", start)
               when '-'
                 advance
                 if !at_end? && current_char == '>'
@@ -186,11 +187,14 @@ module Parsegres
                   Token.new(:minus, "-", start)
                 end
               when '*'
-                advance; Token.new(:star, "*", start)
+                advance
+                Token.new(:star, "*", start)
               when '/'
-                advance; Token.new(:slash, "/", start)
+                advance
+                Token.new(:slash, "/", start)
               when '%'
-                advance; Token.new(:percent, "%", start)
+                advance
+                Token.new(:percent, "%", start)
               when '#'
                 advance
                 if !at_end? && current_char == '>'
@@ -229,17 +233,23 @@ module Parsegres
                   raise LexError.new("Unexpected ':' (did you mean '::'?)", start)
                 end
               when '('
-                advance; Token.new(:l_paren, "(", start)
+                advance
+                Token.new(:l_paren, "(", start)
               when ')'
-                advance; Token.new(:r_paren, ")", start)
+                advance
+                Token.new(:r_paren, ")", start)
               when '['
-                advance; Token.new(:l_bracket, "[", start)
+                advance
+                Token.new(:l_bracket, "[", start)
               when ']'
-                advance; Token.new(:r_bracket, "]", start)
+                advance
+                Token.new(:r_bracket, "]", start)
               when ','
-                advance; Token.new(:comma, ",", start)
+                advance
+                Token.new(:comma, ",", start)
               when ';'
-                advance; Token.new(:semicolon, ";", start)
+                advance
+                Token.new(:semicolon, ";", start)
               when '.'
                 advance
                 if !at_end? && current_char.ascii_number?
@@ -277,7 +287,8 @@ module Parsegres
                   Token.new(:tilde, "~", start)
                 end
               when '^'
-                advance; Token.new(:power, "^", start)
+                advance
+                Token.new(:power, "^", start)
               else
                 raise LexError.new("Unexpected character #{ch.inspect}", start)
               end
