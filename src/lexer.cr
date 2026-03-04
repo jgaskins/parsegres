@@ -302,58 +302,60 @@ module Parsegres
 
     private def scan_string(start : Int32) : Token
       advance # opening '
-      io = IO::Memory.new
-      loop do
-        raise LexError.new("Unterminated string literal", start) if at_end?
-        ch = current_char
-        if ch == '\''
-          advance
-          if !at_end? && current_char == '\'' # escaped ''
-            io << '\''
+      string = String.build do |str|
+        loop do
+          raise LexError.new("Unterminated string literal", start) if at_end?
+          ch = current_char
+          if ch == '\''
+            advance
+            if !at_end? && current_char == '\'' # escaped ''
+              str << '\''
+              advance
+            else
+              break
+            end
+          elsif ch == '\\'
+            advance
+            raise LexError.new("Unterminated string literal", start) if at_end?
+            case current_char
+            when 'n'  then str << '\n'
+            when 't'  then str << '\t'
+            when 'r'  then str << '\r'
+            when '\\' then str << '\\'
+            when '\'' then str << '\''
+            else           str << '\\' << current_char
+            end
             advance
           else
-            break
+            str << ch
+            advance
           end
-        elsif ch == '\\'
-          advance
-          raise LexError.new("Unterminated string literal", start) if at_end?
-          case current_char
-          when 'n' ; io << '\n'
-          when 't' ; io << '\t'
-          when 'r' ; io << '\r'
-          when '\\'; io << '\\'
-          when '\''; io << '\''
-          else       io << '\\'; io << current_char
-          end
-          advance
-        else
-          io << ch
-          advance
         end
       end
-      Token.new(:string, io.to_s, start)
+      Token.new(:string, string, start)
     end
 
     private def scan_quoted_identifier(start : Int32) : Token
       advance # opening "
-      io = IO::Memory.new
-      loop do
-        raise LexError.new("Unterminated quoted identifier", start) if at_end?
-        ch = current_char
-        if ch == '"'
-          advance
-          if !at_end? && current_char == '"'
-            io << '"'
+      string = String.build do |str|
+        loop do
+          raise LexError.new("Unterminated quoted identifier", start) if at_end?
+          ch = current_char
+          if ch == '"'
             advance
+            if !at_end? && current_char == '"'
+              str << '"'
+              advance
+            else
+              break
+            end
           else
-            break
+            str << ch
+            advance
           end
-        else
-          io << ch
-          advance
         end
       end
-      Token.new(:identifier, io.to_s, start)
+      Token.new(:identifier, string, start)
     end
 
     private def scan_dollar(start : Int32) : Token
@@ -374,30 +376,31 @@ module Parsegres
         tag = @chars[tag_start...@pos].join
         advance # consume the closing $ of the opening delimiter
 
-        io = IO::Memory.new
-        loop do
-          raise LexError.new("Unterminated dollar-quoted string", start) if at_end?
-          if current_char == '$'
-            advance
-            ctag_start = @pos
-            while !at_end? && (current_char.ascii_alphanumeric? || current_char == '_')
+        string = String.build do |str|
+          loop do
+            raise LexError.new("Unterminated dollar-quoted string", start) if at_end?
+            if current_char == '$'
+              advance
+              ctag_start = @pos
+              while !at_end? && (current_char.ascii_alphanumeric? || current_char == '_')
+                advance
+              end
+              ctag = @source[ctag_start...@pos]
+              if !at_end? && current_char == '$' && ctag == tag
+                advance # consume closing $
+                break
+              else
+                # Not the closing delimiter — emit as content and continue
+                str << '$'
+                str << ctag
+              end
+            else
+              str << current_char
               advance
             end
-            ctag = @chars[ctag_start...@pos].join
-            if !at_end? && current_char == '$' && ctag == tag
-              advance # consume closing $
-              break
-            else
-              # Not the closing delimiter — emit as content and continue
-              io << '$'
-              io << ctag
-            end
-          else
-            io << current_char
-            advance
           end
         end
-        Token.new(:string, io.to_s, start)
+        Token.new(:string, string, start)
       end
     end
 
