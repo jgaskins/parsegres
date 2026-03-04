@@ -88,6 +88,8 @@ module Parsegres
       "BEGIN"        => TokenType::Begin,
       "COMMIT"       => TokenType::Commit,
       "ROLLBACK"     => TokenType::Rollback,
+      "SAVEPOINT"    => TokenType::Savepoint,
+      "RELEASE"      => TokenType::Release,
       "EXTENSION"    => TokenType::Extension,
       "EXCLUDE"      => TokenType::Exclude,
       "TYPE"         => TokenType::Type,

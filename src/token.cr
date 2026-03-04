@@ -30,7 +30,7 @@ module Parsegres
     Primary; Key; References; Foreign; Check; Unique; Constraint
     Alter; Add; Drop; Column; Rename; To; Cascade; Restrict
     Index; Concurrently
-    View; Truncate; Sequence; Schema; Begin; Commit; Rollback
+    View; Truncate; Sequence; Schema; Begin; Commit; Rollback; Savepoint; Release
     Extension; Exclude; Type; Do
     Over; Partition
 

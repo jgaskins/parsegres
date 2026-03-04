@@ -2682,6 +2682,31 @@ describe Parsegres do
       it "parses ROLLBACK TRANSACTION" do
         Parsegres.parse("ROLLBACK TRANSACTION").should be_a(Parsegres::AST::RollbackStatement)
       end
+
+      it "parses SAVEPOINT" do
+        stmt = Parsegres.parse("SAVEPOINT my_sp").as(Parsegres::AST::SavepointStatement)
+        stmt.name.should eq "my_sp"
+      end
+
+      it "parses RELEASE SAVEPOINT" do
+        stmt = Parsegres.parse("RELEASE SAVEPOINT my_sp").as(Parsegres::AST::ReleaseSavepointStatement)
+        stmt.name.should eq "my_sp"
+      end
+
+      it "parses RELEASE without the SAVEPOINT keyword" do
+        stmt = Parsegres.parse("RELEASE my_sp").as(Parsegres::AST::ReleaseSavepointStatement)
+        stmt.name.should eq "my_sp"
+      end
+
+      it "parses ROLLBACK TO SAVEPOINT" do
+        stmt = Parsegres.parse("ROLLBACK TO SAVEPOINT my_sp").as(Parsegres::AST::RollbackToSavepointStatement)
+        stmt.name.should eq "my_sp"
+      end
+
+      it "parses ROLLBACK TO without the SAVEPOINT keyword" do
+        stmt = Parsegres.parse("ROLLBACK TO my_sp").as(Parsegres::AST::RollbackToSavepointStatement)
+        stmt.name.should eq "my_sp"
+      end
     end
 
     describe "DISTINCT ON" do

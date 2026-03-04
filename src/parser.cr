@@ -39,6 +39,10 @@ module Parsegres
         parse_commit
       when .rollback?
         parse_rollback
+      when .savepoint?
+        parse_savepoint
+      when .release?
+        parse_release_savepoint
       when .do?
         parse_do
       when .with?
@@ -1987,12 +1991,30 @@ module Parsegres
       AST::CommitStatement.new
     end
 
-    private def parse_rollback : AST::RollbackStatement
+    private def parse_rollback : AST::Statement
       consume :rollback
       if current.type.identifier? && (current.value.upcase == "WORK" || current.value.upcase == "TRANSACTION")
         advance
+        return AST::RollbackStatement.new
+      end
+      if current.type.to?
+        advance
+        token(:savepoint) # optional SAVEPOINT keyword
+        name = consume_name.value
+        return AST::RollbackToSavepointStatement.new(name)
       end
       AST::RollbackStatement.new
+    end
+
+    private def parse_savepoint : AST::SavepointStatement
+      consume :savepoint
+      AST::SavepointStatement.new(consume_name.value)
+    end
+
+    private def parse_release_savepoint : AST::ReleaseSavepointStatement
+      consume :release
+      token(:savepoint) # optional SAVEPOINT keyword
+      AST::ReleaseSavepointStatement.new(consume_name.value)
     end
 
     private def parse_do : AST::DoStatement
@@ -2403,6 +2425,7 @@ module Parsegres
       TokenType::Index, TokenType::Concurrently,
       TokenType::View, TokenType::Truncate, TokenType::Sequence,
       TokenType::Schema, TokenType::Begin, TokenType::Commit, TokenType::Rollback,
+      TokenType::Savepoint, TokenType::Release,
       TokenType::EOF,
     }
 
