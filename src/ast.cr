@@ -391,6 +391,7 @@ module Parsegres
     # CREATE / ALTER / DROP SEQUENCE
 
     class SequenceOptions < Node
+      property type : String? = nil
       property increment : Int64? = nil
       property min_value : Int64? = nil
       property? no_min_value : Bool = false
@@ -846,14 +847,16 @@ module Parsegres
 
     class OrderByItem < Node
       enum Direction
-        Asc; Desc
+        ASC
+        DESC
       end
       enum NullsOrder
-        First; Last
+        FIRST
+        LAST
       end
 
       property expr : Expr
-      property direction : Direction = Direction::Asc
+      property direction : Direction = :asc
       property nulls_order : NullsOrder? = nil
 
       def initialize(@expr)

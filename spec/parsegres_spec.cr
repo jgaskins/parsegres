@@ -2280,6 +2280,14 @@ describe Parsegres do
           .should be_true
       end
 
+      it "parses CREATE SEQUENCE AS TYPE" do
+        options = Parsegres.parse("CREATE SEQUENCE seq AS int8 INCREMENT BY 1").as(CREATE_SEQUENCE)
+          .options
+
+        options.type.should eq "int8"
+        options.increment.should eq 1
+      end
+
       it "parses CREATE SEQUENCE with INCREMENT BY" do
         Parsegres.parse("CREATE SEQUENCE seq INCREMENT BY 5").as(CREATE_SEQUENCE)
           .options

@@ -16,7 +16,7 @@ module Parsegres
     end
 
     # Entry point: handles the optional WITH clause, then delegates to
-    # parse_compound which handles set operations and ORDER BY/LIMIT/OFFSET.
+    # parse_compound which handles set operations and ORDER BY/OFFSET/LIMIT.
     def parse_statement : AST::Statement
       case current.type
       when .insert?
@@ -92,7 +92,7 @@ module Parsegres
     #
     # Grammar (simplified):
     #   compound  ::= intersect_chain { (UNION | EXCEPT) [ALL | DISTINCT] intersect_chain }
-    #                 [ORDER BY ...] [LIMIT ...] [OFFSET ...]
+    #                 [ORDER BY ...] [OFFSET ...] [LIMIT ...]
     #   intersect_chain ::= select_core { INTERSECT [ALL | DISTINCT] select_core }
     #
     # INTERSECT has higher precedence than UNION / EXCEPT. The tree structure
@@ -115,7 +115,7 @@ module Parsegres
         result = AST::CompoundSelect.new(op, result, parse_intersect_level)
       end
 
-      # ORDER BY / LIMIT / OFFSET apply to the entire compound result unless
+      # ORDER BY / OFFSET / LIMIT apply to the entire compound result unless
       # the individual SELECT component queries have parentheses around them.
       order_by = [] of AST::OrderByItem
       if token(:order)
@@ -123,14 +123,14 @@ module Parsegres
         order_by = parse_order_by_list
       end
 
-      limit = nil
-      if token(:limit)
-        limit = parse_primary
-      end
-
       offset = nil
       if token(:offset)
         offset = parse_primary
+      end
+
+      limit = nil
+      if token(:limit)
+        limit = parse_primary
       end
 
       if !order_by.empty? || limit || offset
@@ -375,16 +375,16 @@ module Parsegres
       item = AST::OrderByItem.new(parse_expr)
 
       if token(:asc)
-        item.direction = AST::OrderByItem::Direction::Asc
+        item.direction = :asc
       elsif token(:desc)
-        item.direction = AST::OrderByItem::Direction::Desc
+        item.direction = :desc
       end
 
       if token(:nulls)
         if token(:first)
-          item.nulls_order = AST::OrderByItem::NullsOrder::First
+          item.nulls_order = :first
         elsif token(:last)
-          item.nulls_order = AST::OrderByItem::NullsOrder::Last
+          item.nulls_order = :last
         else
           raise ParseError.new("Expected FIRST or LAST after NULLS", current)
         end
@@ -1113,16 +1113,16 @@ module Parsegres
       end
 
       if token(:asc)
-        elem.direction = AST::OrderByItem::Direction::Asc
+        elem.direction = :asc
       elsif token(:desc)
-        elem.direction = AST::OrderByItem::Direction::Desc
+        elem.direction = :desc
       end
 
       if token(:nulls)
         if token(:first)
-          elem.nulls_order = AST::OrderByItem::NullsOrder::First
+          elem.nulls_order = :first
         elsif token(:last)
-          elem.nulls_order = AST::OrderByItem::NullsOrder::Last
+          elem.nulls_order = :last
         else
           raise ParseError.new("Expected FIRST or LAST after NULLS", current)
         end
@@ -1681,8 +1681,10 @@ module Parsegres
     private def parse_sequence_options : AST::SequenceOptions
       opts = AST::SequenceOptions.new
       loop do
-        break unless current.type.identifier?
         case current.value.upcase
+        when "AS"
+          advance
+          opts.type = consume(:identifier).value
         when "INCREMENT"
           advance
           token(:by) # optional BY
