@@ -882,8 +882,8 @@ module Parsegres
       end
     end
 
-    # TODO: Break this up into individual methods
     def emit(expr : AST::Expr, parent_prec : Int32 = 0, right_child : Bool = false) : Nil
+      # TODO: Break this up into individual methods
       case expr
       when AST::IntegerLiteral
         @io << expr.value
