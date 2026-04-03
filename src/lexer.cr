@@ -99,6 +99,9 @@ module Parsegres
       CIText["DO"]           => :do,
       CIText["OVER"]         => :over,
       CIText["PARTITION"]    => :partition,
+      CIText["FOR"]          => :for,
+      CIText["SHARE"]        => :share,
+      CIText["NOWAIT"]       => :no_wait,
     } of CIText => TokenType
 
     def initialize(@source : String)

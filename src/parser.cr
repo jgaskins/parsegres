@@ -133,6 +133,11 @@ module Parsegres
         limit = parse_primary
       end
 
+      locking = [] of AST::LockingClause
+      while current.type.for?
+        locking << parse_locking_clause
+      end
+
       if !order_by.empty? || limit || offset
         case result
         when AST::SelectStatement
@@ -146,7 +151,60 @@ module Parsegres
         end
       end
 
+      if !locking.empty?
+        if result.is_a?(AST::SelectStatement)
+          result.locking = locking
+        end
+      end
+
       result
+    end
+
+    private def parse_locking_clause : AST::LockingClause
+      consume :for
+      strength = if current.value.upcase == "NO" && peek_type(1).key?
+                   advance # NO
+                   advance # KEY
+                   consume :update
+                   AST::LockingClause::Strength::NoKeyUpdate
+                 elsif current.type.update?
+                   advance
+                   AST::LockingClause::Strength::Update
+                 elsif current.value.upcase == "KEY" && peek_type(1).share?
+                   advance # KEY
+                   advance # SHARE
+                   AST::LockingClause::Strength::KeyShare
+                 elsif current.type.share?
+                   advance
+                   AST::LockingClause::Strength::Share
+                 else
+                   raise ParseError.new("Expected UPDATE, NO KEY UPDATE, SHARE, or KEY SHARE after FOR", current)
+                 end
+
+      clause = AST::LockingClause.new(strength)
+
+      if current.type.identifier? && current.value.upcase == "OF"
+        advance
+        clause.of_tables << consume(:identifier).value
+        while token(:comma)
+          clause.of_tables << consume(:identifier).value
+        end
+      end
+
+      if current.type.no_wait?
+        advance
+        clause.wait_policy = :no_wait
+      elsif current.type.identifier? && current.value.upcase == "SKIP"
+        advance
+        if current.type.identifier? && current.value.upcase == "LOCKED"
+          advance
+          clause.wait_policy = :skip_locked
+        else
+          raise ParseError.new("Expected LOCKED after SKIP", current)
+        end
+      end
+
+      clause
     end
 
     # Parses a single SELECT, or a parenthesized compound query like (SELECT ... UNION SELECT ...).

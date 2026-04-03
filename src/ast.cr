@@ -31,6 +31,29 @@ module Parsegres
       property order_by : Array(OrderByItem) = [] of OrderByItem
       property limit : Expr? = nil
       property offset : Expr? = nil
+      property locking : Array(LockingClause) = [] of LockingClause
+    end
+
+    class LockingClause < Node
+      enum Strength
+        Update
+        NoKeyUpdate
+        Share
+        KeyShare
+      end
+
+      enum WaitPolicy
+        Wait
+        NoWait
+        SkipLocked
+      end
+
+      property strength : Strength
+      property of_tables : Array(String) = [] of String
+      property wait_policy : WaitPolicy = :wait
+
+      def initialize(@strength)
+      end
     end
 
     class InsertStatement < DMLStatement

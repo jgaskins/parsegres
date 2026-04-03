@@ -112,6 +112,28 @@ module Parsegres
       end
 
       emit_order_offset_limit stmt.order_by, stmt.offset, stmt.limit
+
+      stmt.locking.each do |clause|
+        @io << " FOR "
+        case clause.strength
+        in .update?        then @io << "UPDATE"
+        in .no_key_update? then @io << "NO KEY UPDATE"
+        in .share?         then @io << "SHARE"
+        in .key_share?     then @io << "KEY SHARE"
+        end
+        unless clause.of_tables.empty?
+          @io << " OF "
+          clause.of_tables.each_with_index do |t, i|
+            @io << ", " if i > 0
+            emit_identifier t
+          end
+        end
+        case clause.wait_policy
+        in .wait?         then # nothing
+        in .no_wait?      then @io << " NOWAIT"
+        in .skip_locked?  then @io << " SKIP LOCKED"
+        end
+      end
     end
 
     def emit(stmt : AST::CompoundSelect) : Nil

@@ -2905,6 +2905,59 @@ describe Parsegres do
       end
     end
 
+    describe "FOR UPDATE / locking clauses" do
+      it "parses FOR UPDATE" do
+        stmt = Parsegres.parse("SELECT * FROM users FOR UPDATE").as(SELECT)
+        stmt.locking.size.should eq 1
+        stmt.locking[0].strength.update?.should be_true
+        stmt.locking[0].wait_policy.wait?.should be_true
+        stmt.locking[0].of_tables.should be_empty
+      end
+
+      it "parses FOR SHARE" do
+        stmt = Parsegres.parse("SELECT * FROM users FOR SHARE").as(SELECT)
+        stmt.locking[0].strength.share?.should be_true
+      end
+
+      it "parses FOR KEY SHARE" do
+        stmt = Parsegres.parse("SELECT * FROM users FOR KEY SHARE").as(SELECT)
+        stmt.locking[0].strength.key_share?.should be_true
+      end
+
+      it "parses FOR NO KEY UPDATE" do
+        stmt = Parsegres.parse("SELECT * FROM users FOR NO KEY UPDATE").as(SELECT)
+        stmt.locking[0].strength.no_key_update?.should be_true
+      end
+
+      it "parses NOWAIT" do
+        stmt = Parsegres.parse("SELECT * FROM users FOR UPDATE NOWAIT").as(SELECT)
+        stmt.locking[0].wait_policy.no_wait?.should be_true
+      end
+
+      it "parses SKIP LOCKED" do
+        stmt = Parsegres.parse("SELECT * FROM users FOR UPDATE SKIP LOCKED").as(SELECT)
+        stmt.locking[0].wait_policy.skip_locked?.should be_true
+      end
+
+      it "parses OF table list" do
+        stmt = Parsegres.parse("SELECT * FROM users, orders FOR UPDATE OF users, orders").as(SELECT)
+        stmt.locking[0].of_tables.should eq ["users", "orders"]
+      end
+
+      it "parses multiple locking clauses" do
+        stmt = Parsegres.parse("SELECT * FROM users FOR UPDATE FOR SHARE").as(SELECT)
+        stmt.locking.size.should eq 2
+        stmt.locking[0].strength.update?.should be_true
+        stmt.locking[1].strength.share?.should be_true
+      end
+
+      it "parses FOR UPDATE after ORDER BY and LIMIT" do
+        stmt = Parsegres.parse("SELECT * FROM users ORDER BY id LIMIT 10 FOR UPDATE").as(SELECT)
+        stmt.locking[0].strength.update?.should be_true
+        stmt.limit.as(Parsegres::AST::IntegerLiteral).value.should eq 10
+      end
+    end
+
     describe "CREATE RULE" do
       it "parses CREATE OR REPLACE RULE ... DO INSTEAD ()" do
         stmt = Parsegres.parse(<<-SQL).as(Parsegres::AST::CreateRuleStatement)

@@ -170,6 +170,16 @@ describe Parsegres::Printer do
       "WITH cte AS NOT MATERIALIZED (SELECT 1) SELECT * FROM cte"
   end
 
+  describe "FOR UPDATE / locking clauses" do
+    it_round_trips "FOR UPDATE", "SELECT 1 FOR UPDATE"
+    it_round_trips "FOR SHARE", "SELECT 1 FOR SHARE"
+    it_round_trips "FOR KEY SHARE", "SELECT 1 FOR KEY SHARE"
+    it_round_trips "FOR NO KEY UPDATE", "SELECT 1 FOR NO KEY UPDATE"
+    it_round_trips "FOR UPDATE NOWAIT", "SELECT 1 FOR UPDATE NOWAIT"
+    it_round_trips "FOR UPDATE SKIP LOCKED", "SELECT 1 FOR UPDATE SKIP LOCKED"
+    it_round_trips "multiple locking clauses", "SELECT 1 FOR UPDATE FOR SHARE"
+  end
+
   describe "set operations" do
     it_round_trips "UNION",
       "SELECT 1 UNION SELECT 2"
