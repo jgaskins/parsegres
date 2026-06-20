@@ -58,24 +58,18 @@ module Parsegres
     end
 
     abstract class Statement < Node
-      include Inspectable
-
       def pretty_print_label
         self.class.name
       end
     end
 
     abstract class Expr < Node
-      include Inspectable
-
       def pretty_print_label
         self.class.name.gsub /.*::/, ""
       end
     end
 
     abstract class FromItem < Node
-      include Inspectable
-
       def pretty_print_label
         self.class.name.gsub /.*::/, ""
       end
