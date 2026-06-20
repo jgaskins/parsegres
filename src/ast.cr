@@ -12,7 +12,7 @@ module Parsegres
               if has_written && {{i < @type.instance_vars.size - 1}}
                 pp.comma
               else
-                pp.breakable
+                pp.breakable ""
               end
             end
 
