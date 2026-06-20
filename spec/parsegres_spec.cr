@@ -2280,6 +2280,14 @@ describe Parsegres do
           .should be_true
       end
 
+      it "parses CREATE SEQUENCE AS TYPE" do
+        options = Parsegres.parse("CREATE SEQUENCE seq AS int8 INCREMENT BY 1").as(CREATE_SEQUENCE)
+          .options
+
+        options.type.should eq "int8"
+        options.increment.should eq 1
+      end
+
       it "parses CREATE SEQUENCE with INCREMENT BY" do
         Parsegres.parse("CREATE SEQUENCE seq INCREMENT BY 5").as(CREATE_SEQUENCE)
           .options
@@ -2682,6 +2690,31 @@ describe Parsegres do
       it "parses ROLLBACK TRANSACTION" do
         Parsegres.parse("ROLLBACK TRANSACTION").should be_a(Parsegres::AST::RollbackStatement)
       end
+
+      it "parses SAVEPOINT" do
+        stmt = Parsegres.parse("SAVEPOINT my_sp").as(Parsegres::AST::SavepointStatement)
+        stmt.name.should eq "my_sp"
+      end
+
+      it "parses RELEASE SAVEPOINT" do
+        stmt = Parsegres.parse("RELEASE SAVEPOINT my_sp").as(Parsegres::AST::ReleaseSavepointStatement)
+        stmt.name.should eq "my_sp"
+      end
+
+      it "parses RELEASE without the SAVEPOINT keyword" do
+        stmt = Parsegres.parse("RELEASE my_sp").as(Parsegres::AST::ReleaseSavepointStatement)
+        stmt.name.should eq "my_sp"
+      end
+
+      it "parses ROLLBACK TO SAVEPOINT" do
+        stmt = Parsegres.parse("ROLLBACK TO SAVEPOINT my_sp").as(Parsegres::AST::RollbackToSavepointStatement)
+        stmt.name.should eq "my_sp"
+      end
+
+      it "parses ROLLBACK TO without the SAVEPOINT keyword" do
+        stmt = Parsegres.parse("ROLLBACK TO my_sp").as(Parsegres::AST::RollbackToSavepointStatement)
+        stmt.name.should eq "my_sp"
+      end
     end
 
     describe "DISTINCT ON" do
@@ -2869,6 +2902,59 @@ describe Parsegres do
           .ctes[0]
           .materialized
           .should be_nil
+      end
+    end
+
+    describe "FOR UPDATE / locking clauses" do
+      it "parses FOR UPDATE" do
+        stmt = Parsegres.parse("SELECT * FROM users FOR UPDATE").as(SELECT)
+        stmt.locking.size.should eq 1
+        stmt.locking[0].strength.update?.should be_true
+        stmt.locking[0].wait_policy.wait?.should be_true
+        stmt.locking[0].of_tables.should be_empty
+      end
+
+      it "parses FOR SHARE" do
+        stmt = Parsegres.parse("SELECT * FROM users FOR SHARE").as(SELECT)
+        stmt.locking[0].strength.share?.should be_true
+      end
+
+      it "parses FOR KEY SHARE" do
+        stmt = Parsegres.parse("SELECT * FROM users FOR KEY SHARE").as(SELECT)
+        stmt.locking[0].strength.key_share?.should be_true
+      end
+
+      it "parses FOR NO KEY UPDATE" do
+        stmt = Parsegres.parse("SELECT * FROM users FOR NO KEY UPDATE").as(SELECT)
+        stmt.locking[0].strength.no_key_update?.should be_true
+      end
+
+      it "parses NOWAIT" do
+        stmt = Parsegres.parse("SELECT * FROM users FOR UPDATE NOWAIT").as(SELECT)
+        stmt.locking[0].wait_policy.no_wait?.should be_true
+      end
+
+      it "parses SKIP LOCKED" do
+        stmt = Parsegres.parse("SELECT * FROM users FOR UPDATE SKIP LOCKED").as(SELECT)
+        stmt.locking[0].wait_policy.skip_locked?.should be_true
+      end
+
+      it "parses OF table list" do
+        stmt = Parsegres.parse("SELECT * FROM users, orders FOR UPDATE OF users, orders").as(SELECT)
+        stmt.locking[0].of_tables.should eq ["users", "orders"]
+      end
+
+      it "parses multiple locking clauses" do
+        stmt = Parsegres.parse("SELECT * FROM users FOR UPDATE FOR SHARE").as(SELECT)
+        stmt.locking.size.should eq 2
+        stmt.locking[0].strength.update?.should be_true
+        stmt.locking[1].strength.share?.should be_true
+      end
+
+      it "parses FOR UPDATE after ORDER BY and LIMIT" do
+        stmt = Parsegres.parse("SELECT * FROM users ORDER BY id LIMIT 10 FOR UPDATE").as(SELECT)
+        stmt.locking[0].strength.update?.should be_true
+        stmt.limit.as(Parsegres::AST::IntegerLiteral).value.should eq 10
       end
     end
 

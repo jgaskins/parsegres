@@ -4,13 +4,21 @@ module Parsegres
 
     abstract class Statement < Node; end
 
+    abstract class DQLStatement < Statement; end
+
+    abstract class DMLStatement < Statement; end
+
+    abstract class DDLStatement < Statement; end
+
+    abstract class TCLStatement < Statement; end
+
     abstract class Expr < Node; end
 
     abstract class FromItem < Node; end
 
     # Statements
 
-    class SelectStatement < Statement
+    class SelectStatement < DQLStatement
       property ctes : Array(CTEDefinition) = [] of CTEDefinition
       property? recursive : Bool = false
       property? distinct : Bool = false
@@ -23,9 +31,32 @@ module Parsegres
       property order_by : Array(OrderByItem) = [] of OrderByItem
       property limit : Expr? = nil
       property offset : Expr? = nil
+      property locking : Array(LockingClause) = [] of LockingClause
     end
 
-    class InsertStatement < Statement
+    class LockingClause < Node
+      enum Strength
+        Update
+        NoKeyUpdate
+        Share
+        KeyShare
+      end
+
+      enum WaitPolicy
+        Wait
+        NoWait
+        SkipLocked
+      end
+
+      property strength : Strength
+      property of_tables : Array(String) = [] of String
+      property wait_policy : WaitPolicy = :wait
+
+      def initialize(@strength)
+      end
+    end
+
+    class InsertStatement < DMLStatement
       property ctes : Array(CTEDefinition) = [] of CTEDefinition
       property? recursive : Bool = false
       property schema : String? = nil
@@ -38,7 +69,7 @@ module Parsegres
       end
     end
 
-    class UpdateStatement < Statement
+    class UpdateStatement < DMLStatement
       property ctes : Array(CTEDefinition) = [] of CTEDefinition
       property? recursive : Bool = false
       property schema : String? = nil
@@ -56,7 +87,7 @@ module Parsegres
 
     record Assignment, column : String, value : Expr
 
-    class DeleteStatement < Statement
+    class DeleteStatement < DMLStatement
       property ctes : Array(CTEDefinition) = [] of CTEDefinition
       property? recursive : Bool = false
       property schema : String? = nil
@@ -73,7 +104,7 @@ module Parsegres
 
     # CREATE TABLE
 
-    class CreateTableStatement < Statement
+    class CreateTableStatement < DDLStatement
       property schema : String? = nil
       property name : String
       property? temporary : Bool = false
@@ -185,7 +216,7 @@ module Parsegres
       Cascade
     end
 
-    class AlterTableStatement < Statement
+    class AlterTableStatement < DDLStatement
       property schema : String? = nil
       property name : String
       property? if_exists : Bool = false
@@ -287,7 +318,7 @@ module Parsegres
 
     record DropTableTarget, schema : String?, name : String
 
-    class DropTableStatement < Statement
+    class DropTableStatement < DDLStatement
       property targets : Array(DropTableTarget)
       property? if_exists : Bool = false
       property behavior : DropBehavior? = nil
@@ -308,7 +339,7 @@ module Parsegres
       end
     end
 
-    class CreateIndexStatement < Statement
+    class CreateIndexStatement < DDLStatement
       property? unique : Bool = false
       property? concurrently : Bool = false
       property? if_not_exists : Bool = false
@@ -326,7 +357,7 @@ module Parsegres
 
     record DropIndexTarget, schema : String?, name : String
 
-    class DropIndexStatement < Statement
+    class DropIndexStatement < DDLStatement
       property targets : Array(DropIndexTarget)
       property? concurrently : Bool = false
       property? if_exists : Bool = false
@@ -338,7 +369,7 @@ module Parsegres
 
     # CREATE VIEW / DROP VIEW
 
-    class CreateViewStatement < Statement
+    class CreateViewStatement < DDLStatement
       property? or_replace : Bool = false
       property? temporary : Bool = false
       property? if_not_exists : Bool = false
@@ -353,7 +384,7 @@ module Parsegres
 
     record DropViewTarget, schema : String?, name : String
 
-    class DropViewStatement < Statement
+    class DropViewStatement < DDLStatement
       property targets : Array(DropViewTarget)
       property? if_exists : Bool = false
       property behavior : DropBehavior? = nil
@@ -366,7 +397,7 @@ module Parsegres
 
     record TruncateTarget, schema : String?, name : String, only : Bool
 
-    class TruncateStatement < Statement
+    class TruncateStatement < DDLStatement
       enum IdentityBehavior
         Restart
         Continue
@@ -383,6 +414,7 @@ module Parsegres
     # CREATE / ALTER / DROP SEQUENCE
 
     class SequenceOptions < Node
+      property type : String? = nil
       property increment : Int64? = nil
       property min_value : Int64? = nil
       property? no_min_value : Bool = false
@@ -396,7 +428,7 @@ module Parsegres
       property owned_by : String? = nil
     end
 
-    class CreateSequenceStatement < Statement
+    class CreateSequenceStatement < DDLStatement
       property? temporary : Bool = false
       property? if_not_exists : Bool = false
       property schema : String? = nil
@@ -408,7 +440,7 @@ module Parsegres
       end
     end
 
-    class AlterSequenceStatement < Statement
+    class AlterSequenceStatement < DDLStatement
       property? if_exists : Bool = false
       property schema : String? = nil
       property name : String
@@ -421,7 +453,7 @@ module Parsegres
 
     record DropSequenceTarget, schema : String?, name : String
 
-    class DropSequenceStatement < Statement
+    class DropSequenceStatement < DDLStatement
       property targets : Array(DropSequenceTarget)
       property? if_exists : Bool = false
       property behavior : DropBehavior? = nil
@@ -432,7 +464,7 @@ module Parsegres
 
     # CREATE / DROP EXTENSION
 
-    class CreateExtensionStatement < Statement
+    class CreateExtensionStatement < DDLStatement
       property name : String
       property? if_not_exists : Bool = false
 
@@ -440,7 +472,7 @@ module Parsegres
       end
     end
 
-    class DropExtensionStatement < Statement
+    class DropExtensionStatement < DDLStatement
       property targets : Array(String)
       property? if_exists : Bool = false
       property behavior : DropBehavior? = nil
@@ -451,7 +483,7 @@ module Parsegres
 
     # CREATE / DROP TYPE
 
-    class CreateRangeTypeStatement < Statement
+    class CreateRangeTypeStatement < DDLStatement
       property schema : String? = nil
       property name : String
       property subtype : String
@@ -462,7 +494,7 @@ module Parsegres
 
     record DropTypeTarget, schema : String?, name : String
 
-    class DropTypeStatement < Statement
+    class DropTypeStatement < DDLStatement
       property targets : Array(DropTypeTarget)
       property? if_exists : Bool = false
       property behavior : DropBehavior? = nil
@@ -473,7 +505,7 @@ module Parsegres
 
     # CREATE / DROP SCHEMA
 
-    class CreateSchemaStatement < Statement
+    class CreateSchemaStatement < DDLStatement
       property? if_not_exists : Bool = false
       property name : String? = nil
       property authorization : String? = nil
@@ -482,7 +514,7 @@ module Parsegres
       end
     end
 
-    class DropSchemaStatement < Statement
+    class DropSchemaStatement < DDLStatement
       property targets : Array(String)
       property? if_exists : Bool = false
       property behavior : DropBehavior? = nil
@@ -493,13 +525,34 @@ module Parsegres
 
     # Transaction control
 
-    class BeginStatement < Statement; end
+    class BeginStatement < TCLStatement; end
 
-    class CommitStatement < Statement; end
+    class CommitStatement < TCLStatement; end
 
-    class RollbackStatement < Statement; end
+    class RollbackStatement < TCLStatement; end
 
-    class CreateRuleStatement < Statement
+    class SavepointStatement < TCLStatement
+      property name : String
+
+      def initialize(@name)
+      end
+    end
+
+    class ReleaseSavepointStatement < TCLStatement
+      property name : String
+
+      def initialize(@name)
+      end
+    end
+
+    class RollbackToSavepointStatement < TCLStatement
+      property name : String
+
+      def initialize(@name)
+      end
+    end
+
+    class CreateRuleStatement < DDLStatement
       property name : String
       property? or_replace : Bool = false
       property table : String
@@ -509,7 +562,7 @@ module Parsegres
       end
     end
 
-    class DoStatement < Statement
+    class DoStatement < DDLStatement
       property code : String
       property language : String? = nil
 
@@ -553,7 +606,7 @@ module Parsegres
     # The tree structure encodes this: each CompoundSelect node holds two
     # Statement children, so nesting naturally reflects precedence.
 
-    class CompoundSelect < Statement
+    class CompoundSelect < DQLStatement
       enum Op
         Union
         UnionAll
@@ -635,35 +688,38 @@ module Parsegres
 
     # Literals
 
-    class IntegerLiteral < Expr
+    class Literal < Expr
+    end
+
+    class IntegerLiteral < Literal
       property value : Int64
 
       def initialize(@value)
       end
     end
 
-    class FloatLiteral < Expr
+    class FloatLiteral < Literal
       property value : Float64
 
       def initialize(@value)
       end
     end
 
-    class StringLiteral < Expr
+    class StringLiteral < Literal
       property value : String
 
       def initialize(@value)
       end
     end
 
-    class BoolLiteral < Expr
+    class BoolLiteral < Literal
       property value : Bool
 
       def initialize(@value)
       end
     end
 
-    class NullLiteral < Expr; end
+    class NullLiteral < Literal; end
 
     class DefaultExpr < Expr; end
 
@@ -814,14 +870,16 @@ module Parsegres
 
     class OrderByItem < Node
       enum Direction
-        Asc; Desc
+        ASC
+        DESC
       end
       enum NullsOrder
-        First; Last
+        FIRST
+        LAST
       end
 
       property expr : Expr
-      property direction : Direction = Direction::Asc
+      property direction : Direction = :asc
       property nulls_order : NullsOrder? = nil
 
       def initialize(@expr)

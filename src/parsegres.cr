@@ -1,4 +1,5 @@
 require "./parser"
+require "./printer"
 
 module Parsegres
   VERSION = "0.1.0"
