@@ -1,3 +1,8 @@
+require "./ast"
+require "./error"
+require "./lexer"
+require "./token"
+
 module Parsegres
   class Parser
     # Multi-word PostgreSQL type names that can appear after ::
@@ -16,7 +21,7 @@ module Parsegres
     end
 
     # Entry point: handles the optional WITH clause, then delegates to
-    # parse_compound which handles set operations and ORDER BY/LIMIT/OFFSET.
+    # parse_compound which handles set operations and ORDER BY/OFFSET/LIMIT.
     def parse_statement : AST::Statement
       case current.type
       when .insert?
@@ -39,6 +44,10 @@ module Parsegres
         parse_commit
       when .rollback?
         parse_rollback
+      when .savepoint?
+        parse_savepoint
+      when .release?
+        parse_release_savepoint
       when .do?
         parse_do
       when .with?
@@ -88,7 +97,7 @@ module Parsegres
     #
     # Grammar (simplified):
     #   compound  ::= intersect_chain { (UNION | EXCEPT) [ALL | DISTINCT] intersect_chain }
-    #                 [ORDER BY ...] [LIMIT ...] [OFFSET ...]
+    #                 [ORDER BY ...] [OFFSET ...] [LIMIT ...]
     #   intersect_chain ::= select_core { INTERSECT [ALL | DISTINCT] select_core }
     #
     # INTERSECT has higher precedence than UNION / EXCEPT. The tree structure
@@ -111,7 +120,7 @@ module Parsegres
         result = AST::CompoundSelect.new(op, result, parse_intersect_level)
       end
 
-      # ORDER BY / LIMIT / OFFSET apply to the entire compound result unless
+      # ORDER BY / OFFSET / LIMIT apply to the entire compound result unless
       # the individual SELECT component queries have parentheses around them.
       order_by = [] of AST::OrderByItem
       if token(:order)
@@ -119,14 +128,19 @@ module Parsegres
         order_by = parse_order_by_list
       end
 
+      offset = nil
+      if token(:offset)
+        offset = parse_primary
+      end
+
       limit = nil
       if token(:limit)
         limit = parse_primary
       end
 
-      offset = nil
-      if token(:offset)
-        offset = parse_primary
+      locking = [] of AST::LockingClause
+      while current.type.for?
+        locking << parse_locking_clause
       end
 
       if !order_by.empty? || limit || offset
@@ -142,7 +156,60 @@ module Parsegres
         end
       end
 
+      if !locking.empty?
+        if result.is_a?(AST::SelectStatement)
+          result.locking = locking
+        end
+      end
+
       result
+    end
+
+    private def parse_locking_clause : AST::LockingClause
+      consume :for
+      strength = if current.value.upcase == "NO" && peek_type(1).key?
+                   advance # NO
+                   advance # KEY
+                   consume :update
+                   AST::LockingClause::Strength::NoKeyUpdate
+                 elsif current.type.update?
+                   advance
+                   AST::LockingClause::Strength::Update
+                 elsif current.value.upcase == "KEY" && peek_type(1).share?
+                   advance # KEY
+                   advance # SHARE
+                   AST::LockingClause::Strength::KeyShare
+                 elsif current.type.share?
+                   advance
+                   AST::LockingClause::Strength::Share
+                 else
+                   raise ParseError.new("Expected UPDATE, NO KEY UPDATE, SHARE, or KEY SHARE after FOR", current)
+                 end
+
+      clause = AST::LockingClause.new(strength)
+
+      if current.type.identifier? && current.value.upcase == "OF"
+        advance
+        clause.of_tables << consume(:identifier).value
+        while token(:comma)
+          clause.of_tables << consume(:identifier).value
+        end
+      end
+
+      if current.type.no_wait?
+        advance
+        clause.wait_policy = :no_wait
+      elsif current.type.identifier? && current.value.upcase == "SKIP"
+        advance
+        if current.type.identifier? && current.value.upcase == "LOCKED"
+          advance
+          clause.wait_policy = :skip_locked
+        else
+          raise ParseError.new("Expected LOCKED after SKIP", current)
+        end
+      end
+
+      clause
     end
 
     # Parses a single SELECT, or a parenthesized compound query like (SELECT ... UNION SELECT ...).
@@ -259,29 +326,29 @@ module Parsegres
 
       loop do
         join_kind = case current.type
-                    when TokenType::Join
+                    when .join?
                       advance
                       AST::JoinExpr::Kind::Inner
-                    when TokenType::Inner
+                    when .inner?
                       advance
                       consume :join
                       AST::JoinExpr::Kind::Inner
-                    when TokenType::Left
+                    when .left?
                       advance
                       token(:outer)
                       consume :join
                       AST::JoinExpr::Kind::Left
-                    when TokenType::Right
+                    when .right?
                       advance
                       token(:outer)
                       consume :join
                       AST::JoinExpr::Kind::Right
-                    when TokenType::Full
+                    when .full?
                       advance
                       token(:outer)
                       consume :join
                       AST::JoinExpr::Kind::Full
-                    when TokenType::Cross
+                    when .cross?
                       advance
                       consume :join
                       AST::JoinExpr::Kind::Cross
@@ -371,16 +438,16 @@ module Parsegres
       item = AST::OrderByItem.new(parse_expr)
 
       if token(:asc)
-        item.direction = AST::OrderByItem::Direction::Asc
+        item.direction = :asc
       elsif token(:desc)
-        item.direction = AST::OrderByItem::Direction::Desc
+        item.direction = :desc
       end
 
       if token(:nulls)
         if token(:first)
-          item.nulls_order = AST::OrderByItem::NullsOrder::First
+          item.nulls_order = :first
         elsif token(:last)
-          item.nulls_order = AST::OrderByItem::NullsOrder::Last
+          item.nulls_order = :last
         else
           raise ParseError.new("Expected FIRST or LAST after NULLS", current)
         end
@@ -445,43 +512,43 @@ module Parsegres
       left = parse_in_between_like
 
       case current.type
-      when TokenType::Eq
+      when .eq?
         advance
         AST::BinaryExpr.new("=", left, parse_in_between_like)
-      when TokenType::NotEq
+      when .not_eq?
         advance
         AST::BinaryExpr.new("<>", left, parse_in_between_like)
-      when TokenType::Lt
+      when .lt?
         advance
         AST::BinaryExpr.new("<", left, parse_in_between_like)
-      when TokenType::Gt
+      when .gt?
         advance
         AST::BinaryExpr.new(">", left, parse_in_between_like)
-      when TokenType::LtEq
+      when .lt_eq?
         advance
         AST::BinaryExpr.new("<=", left, parse_in_between_like)
-      when TokenType::GtEq
+      when .gt_eq?
         advance
         AST::BinaryExpr.new(">=", left, parse_in_between_like)
-      when TokenType::Contains
+      when .contains?
         advance
         AST::BinaryExpr.new("@>", left, parse_in_between_like)
-      when TokenType::ContainedBy
+      when .contained_by?
         advance
         AST::BinaryExpr.new("<@", left, parse_in_between_like)
-      when TokenType::TextSearch
+      when .text_search?
         advance
         AST::BinaryExpr.new("@@", left, parse_in_between_like)
-      when TokenType::Tilde
+      when .tilde?
         advance
         AST::BinaryExpr.new("~", left, parse_in_between_like)
-      when TokenType::TildeStar
+      when .tilde_star?
         advance
         AST::BinaryExpr.new("~*", left, parse_in_between_like)
-      when TokenType::NotTilde
+      when .not_tilde?
         advance
         AST::BinaryExpr.new("!~", left, parse_in_between_like)
-      when TokenType::NotTildeStar
+      when .not_tilde_star?
         advance
         AST::BinaryExpr.new("!~*", left, parse_in_between_like)
       else
@@ -1109,16 +1176,16 @@ module Parsegres
       end
 
       if token(:asc)
-        elem.direction = AST::OrderByItem::Direction::Asc
+        elem.direction = :asc
       elsif token(:desc)
-        elem.direction = AST::OrderByItem::Direction::Desc
+        elem.direction = :desc
       end
 
       if token(:nulls)
         if token(:first)
-          elem.nulls_order = AST::OrderByItem::NullsOrder::First
+          elem.nulls_order = :first
         elsif token(:last)
-          elem.nulls_order = AST::OrderByItem::NullsOrder::Last
+          elem.nulls_order = :last
         else
           raise ParseError.new("Expected FIRST or LAST after NULLS", current)
         end
@@ -1677,8 +1744,10 @@ module Parsegres
     private def parse_sequence_options : AST::SequenceOptions
       opts = AST::SequenceOptions.new
       loop do
-        break unless current.type.identifier?
         case current.value.upcase
+        when "AS"
+          advance
+          opts.type = consume(:identifier).value
         when "INCREMENT"
           advance
           token(:by) # optional BY
@@ -1987,12 +2056,30 @@ module Parsegres
       AST::CommitStatement.new
     end
 
-    private def parse_rollback : AST::RollbackStatement
+    private def parse_rollback : AST::Statement
       consume :rollback
       if current.type.identifier? && (current.value.upcase == "WORK" || current.value.upcase == "TRANSACTION")
         advance
+        return AST::RollbackStatement.new
+      end
+      if current.type.to?
+        advance
+        token(:savepoint) # optional SAVEPOINT keyword
+        name = consume_name.value
+        return AST::RollbackToSavepointStatement.new(name)
       end
       AST::RollbackStatement.new
+    end
+
+    private def parse_savepoint : AST::SavepointStatement
+      consume :savepoint
+      AST::SavepointStatement.new(consume_name.value)
+    end
+
+    private def parse_release_savepoint : AST::ReleaseSavepointStatement
+      consume :release
+      token(:savepoint) # optional SAVEPOINT keyword
+      AST::ReleaseSavepointStatement.new(consume_name.value)
     end
 
     private def parse_do : AST::DoStatement
@@ -2383,27 +2470,71 @@ module Parsegres
 
     # Words that cannot be bare aliases (they start the next clause)
     private STOP_WORDS = Set(TokenType){
-      TokenType::Where, TokenType::From, TokenType::Join,
-      TokenType::Inner, TokenType::Left, TokenType::Right,
-      TokenType::Full, TokenType::Cross, TokenType::Natural,
-      TokenType::On, TokenType::Using, TokenType::Group,
-      TokenType::Order, TokenType::Having, TokenType::Limit,
-      TokenType::Offset, TokenType::Union, TokenType::Except,
-      TokenType::Intersect, TokenType::And, TokenType::Or,
-      TokenType::With, TokenType::Recursive,
-      TokenType::Insert, TokenType::Into, TokenType::Values,
-      TokenType::Default, TokenType::Returning,
-      TokenType::Update, TokenType::Set, TokenType::Only,
-      TokenType::Delete,
-      TokenType::Create, TokenType::Table, TokenType::Temp, TokenType::Temporary,
-      TokenType::If, TokenType::Primary, TokenType::Key, TokenType::References,
-      TokenType::Foreign, TokenType::Check, TokenType::Unique, TokenType::Constraint,
-      TokenType::Alter, TokenType::Add, TokenType::Drop, TokenType::Column,
-      TokenType::Rename, TokenType::To, TokenType::Cascade, TokenType::Restrict,
-      TokenType::Index, TokenType::Concurrently,
-      TokenType::View, TokenType::Truncate, TokenType::Sequence,
-      TokenType::Schema, TokenType::Begin, TokenType::Commit, TokenType::Rollback,
-      TokenType::EOF,
+      :where,
+      :from,
+      :join,
+      :inner,
+      :left,
+      :right,
+      :full,
+      :cross,
+      :natural,
+      :on,
+      :using,
+      :group,
+      :order,
+      :having,
+      :limit,
+      :offset,
+      :union,
+      :except,
+      :intersect,
+      :and,
+      :or,
+      :with,
+      :recursive,
+      :insert,
+      :into,
+      :values,
+      :default,
+      :returning,
+      :update,
+      :set,
+      :only,
+      :delete,
+      :create,
+      :table,
+      :temp,
+      :temporary,
+      :if,
+      :primary,
+      :key,
+      :references,
+      :foreign,
+      :check,
+      :unique,
+      :constraint,
+      :alter,
+      :add,
+      :drop,
+      :column,
+      :rename,
+      :to,
+      :cascade,
+      :restrict,
+      :index,
+      :concurrently,
+      :view,
+      :truncate,
+      :sequence,
+      :schema,
+      :begin,
+      :commit,
+      :rollback,
+      :savepoint,
+      :release,
+      :for,
+      :eof,
     }
 
     private def stop_word?(type : TokenType) : Bool

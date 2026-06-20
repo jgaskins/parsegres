@@ -1,3 +1,5 @@
+require "./token"
+
 module Parsegres
   class Error < Exception; end
 

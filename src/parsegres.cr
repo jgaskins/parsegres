@@ -1,8 +1,5 @@
-require "./token"
-require "./error"
-require "./ast"
-require "./lexer"
 require "./parser"
+require "./printer"
 
 module Parsegres
   VERSION = "0.1.0"
